@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+// Hardcoded grammar productions
+char prod[8][10] = {
+    "E=TR", "R=+TR", "R=#", "T=FY",
+    "Y=*FY", "Y=#", "F=(E)", "F=i"
+};
+
+char first[10][10], follow[10][10];
+
+// Utility function to add a symbol to a set (no duplicates)
+void add(char* set, char c) {
+    for (int i = 0; set[i]; i++)
+        if (set[i] == c)
+            return;
+    int len = strlen(set);
+    set[len] = c;
+    set[len + 1] = '\0';
+}
+
+// Function to compute First set of a non-terminal
+void findFirst(char c, char* res) {
+    if (!isupper(c)) {  // Terminal
+        add(res, c);
+        return;
+    }
+    for (int i = 0; i < 8; i++) {
+        if (prod[i][0] == c) {
+            if (prod[i][2] == '#')
+                add(res, '#');
+            else
+                findFirst(prod[i][2], res);
+        }
+    }
+}
+
+// Function to compute Follow set of a non-terminal
+void findFollow(char c, char* res) {
+    if (c == 'E')
+        add(res, '$');  // Start symbol
+    for (int i = 0; i < 8; i++) {
+        for (int j = 2; prod[i][j]; j++) {
+            if (prod[i][j] == c) {
+                if (prod[i][j + 1])
+                    findFirst(prod[i][j + 1], res);
+                else if (prod[i][0] != c)
+                    findFollow(prod[i][0], res);
+            }
+        }
+    }
+}
+
+// Main function
+int main() {
+    char nt[] = "ERTYF";  // Non-terminals
+    for (int i = 0; i < 5; i++) {
+        first[i][0] = follow[i][0] = '\0';
+        findFirst(nt[i], first[i]);
+        findFollow(nt[i], follow[i]);
+        printf("First(%c): { %s }\n", nt[i], first[i]);
+    }
+    printf("\n");
+    for (int i = 0; i < 5; i++)
+        printf("Follow(%c): { %s }\n", nt[i], follow[i]);
+    return 0;
+}
